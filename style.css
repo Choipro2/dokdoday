@@ -109,7 +109,8 @@ body.is-touch .hud-keys { display: none; }
 .story-badge { position: absolute; top: 76px; left: 22px; font-size: 12px; color: #fff; background: rgba(0,0,0,.3); padding: 4px 10px; border-radius: 12px; }
 .dialog { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); width: min(980px, calc(100% - 32px)); min-height: 170px; display: flex; gap: 16px; align-items: flex-start; padding: 18px 20px; border-radius: 26px; background: rgba(255,250,238,.97); box-shadow: 0 10px 30px rgba(0,0,0,.3); }
 .dialog canvas { width: 120px; height: 120px; border-radius: 22px; background: linear-gradient(#bfe6f5, #7cc1df); flex: none; }
-.dialog.nar canvas { display: none; }
+.dialog.scene canvas { display: none; }
+.dialog.nar canvas { background: linear-gradient(#2b5f7a, #1d4458); }
 .dialog.nar { background: rgba(20,45,60,.94); color: #fff; }
 .dialog.nar .speaker { color: var(--sun); }
 .dialog-body { flex: 1; min-width: 0; }
@@ -319,3 +320,15 @@ body.is-touch .hud-keys { display: none; }
 .qz-top li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: #fff7e3; margin-top: 6px; font-size: 17px; }
 .qz-top b { margin-left: auto; font-family: 'Jua'; font-weight: 400; }
 @media (max-width: 760px) { .dress { grid-template-columns: 1fr; } .qz-opts button { font-size: 18px; min-height: 72px; } }
+
+/* ---------- 우리 학교 마스코트 ---------- */
+.title-mascot { position: absolute; left: 22px; bottom: 18px; display: flex; flex-direction: column; align-items: flex-start; z-index: 4; cursor: pointer; }
+.title-mascot img { width: clamp(90px, 15vh, 150px); filter: drop-shadow(0 6px 10px rgba(0,0,0,.3)); animation: mBob 2.4s ease-in-out infinite; }
+.title-mascot p { margin: 0 0 6px 30px; max-width: 230px; padding: 9px 13px; border-radius: 16px 16px 16px 4px; background: #fffaf0; font-size: 14px; line-height: 1.45; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+@keyframes mBob { 50% { transform: translateY(-8px) rotate(-3deg); } }
+.m-ava { width: 52px; height: 52px; object-fit: contain; flex: none; }
+.m-big { width: 120px; display: block; margin: 0 auto; animation: mBob 2.4s ease-in-out infinite; }
+.pc-remember { display: flex; align-items: center; gap: 12px; justify-content: center; }
+.pc-remember small { display: block; font-size: 12px; color: #4b7488; }
+.m-hint { display: flex; align-items: center; gap: 10px; }
+@media (max-height: 560px), (max-width: 760px) { .title-mascot { display: none; } }

@@ -6,7 +6,9 @@ import * as A from './art.js';
 import * as Snd from './audio.js';
 import { World, storyConfig, freeConfig } from './game.js';
 import * as Net from './online.js';
-import { CLASS_NAME, CLASS_NUMBERS, CLASSES, CLASS_KEY, CLASS_KNOWN, chooseClass, classPath } from './config.js';
+import { CLASS_NAME, CLASS_NUMBERS, CLASSES, CLASS_KEY, CLASS_KNOWN, chooseClass, classPath, MASCOT_NAME } from './config.js';
+SPEAKERS.nar.name = MASCOT_NAME;
+const MASCOT_TAG = (cls = 'm-ava') => `<img class="${cls}" src="mascot.png" alt="${MASCOT_NAME}">`;
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -291,7 +293,11 @@ function drawFace(c, who) {
   const g = ctx.createLinearGradient(0, 0, 0, c.height);
   g.addColorStop(0, '#cfeefa'); g.addColorStop(1, '#8bcbe6');
   ctx.fillStyle = g; ctx.fillRect(0, 0, c.width, c.height);
-  if (who === 'nar') return;
+  if (who === 'nar') {
+    const draw = () => A.drawMascot(ctx, c.width / 2, c.height / 2, c.height * 0.92, { t: 0, swim: 0 });
+    if (A.MASCOT_IMG.complete) draw(); else A.MASCOT_IMG.addEventListener('load', draw, { once: true });
+    return;
+  }
   const s = c.width / 88;
   A.drawSeal(ctx, c.width * 0.18, c.height * 0.72, 1.25 * s, { kind: who === 'kang' ? 'kang' : who, t: 0, swim: 0, mood: 'happy' });
 }
@@ -341,7 +347,7 @@ function postcardHTML(pc) {
     <div class="pc-points">${pc.points.map(([a, b]) => `<div><small>${a}</small>${b}</div>`).join('')}</div>
     <div class="pc-body">${pc.body.map(b => `<p>${b}</p>`).join('')}</div>
     <div class="pc-words">${pc.words.map(([a, b]) => `<div><b>${a}</b>${b}</div>`).join('')}</div>
-    <div class="pc-remember">${pc.remember}</div>
+    <div class="pc-remember">${MASCOT_TAG()}<span><small>${MASCOT_NAME}의 한마디</small>${pc.remember}</span></div>
     <div class="pc-caution">※ ${pc.caution} 그림은 이해를 돕기 위한 개념 그림이에요. 정확한 내용은 공식 자료로 확인해요.</div>
     <details class="pc-think"><summary>생각해 보기 · ${pc.q}</summary><p>${pc.a}</p></details>`;
 }
@@ -520,12 +526,13 @@ function typeText(el, text) {
 function setLine(who, text, cls = '') {
   const d = $('#dialog');
   d.classList.toggle('nar', who === 'nar' || who === 'scene');
+  d.classList.toggle('scene', who === 'scene');
   $('#speaker').textContent = who === 'scene' ? '' : (SPEAKERS[who]?.name || '');
   const p = $('#line');
   p.className = cls;
   typeText(p, text);
-  if (who !== 'nar' && who !== 'scene') drawFace($('#speakerFace'), who);
-  story.log.push(`${who === 'scene' || who === 'nar' ? '' : SPEAKERS[who].name + ': '}${text}`);
+  if (who !== 'scene') drawFace($('#speakerFace'), who);
+  story.log.push(`${who === 'scene' ? '' : SPEAKERS[who].name + ': '}${text}`);
   if (who === 'kang') Snd.sfx('bark');
 }
 function storyAdvance() {
@@ -778,10 +785,10 @@ function openDressUp() {
       <div class="dress">
         <canvas id="dressCv" width="520" height="360"></canvas>
         <div>
-          <p class="muted">머리와 목에 하나씩 달 수 있어요. 별을 모으고, 수료하고, 우리 반 목표를 이루면 새 아이템이 열려요.</p>
+          <p class="muted">머리와 목에 하나씩 달 수 있어요. 별을 모으고, 수료하고, 우리 반 목표를 이루면 새 아이템이 열려요.${save.acc?.skin === 'mascot' ? '<br><b>지금 우리 학교 마스코트로 변신 중이에요!</b> (변신 중에는 모자·목걸이가 보이지 않아요)' : ''}</p>
           <div class="acc-grid">${ACCESSORIES.map(a => {
             const ok = accUnlocked(a), on = save.acc?.[a.slot] === a.id;
-            return `<button data-acc="${a.id}" class="${on ? 'on' : ''}" ${ok ? '' : 'disabled'}><canvas width="150" height="110"></canvas><b>${a.name}</b><small>${ok ? (on ? '달고 있어요 ✓' : (a.slot === 'head' ? '머리' : '목')) : '🔒 ' + a.desc}</small></button>`;
+            return `<button data-acc="${a.id}" class="${on ? 'on' : ''}" ${ok ? '' : 'disabled'}><canvas width="150" height="110"></canvas><b>${a.name}</b><small>${ok ? (on ? '달고 있어요 ✓' : ({ head: '머리', neck: '목', skin: '변신' }[a.slot])) : '🔒 ' + a.desc}</small></button>`;
           }).join('')}</div>
         </div>
       </div>
@@ -879,7 +886,7 @@ async function renderQuiz(force = false) {
   quizView = key;
   const head = `<div class="eyebrow">⚡ 실시간 퀴즈 대결 · ${esc(profileLabel())}</div>`;
   if (st.status === 'lobby') {
-    openModal(`${head}<h2>참가 완료!</h2><div class="qz-wait">🦭<p>선생님이 문제를 시작하면 바로 나와요.<br>화면을 보고 기다려 주세요.</p></div>`, { cls: 'narrow', closable: false });
+    openModal(`${head}<h2>참가 완료!</h2><div class="qz-wait">${MASCOT_TAG('m-big')}<p>선생님이 문제를 시작하면 바로 나와요.<br>화면을 보고 기다려 주세요.</p></div>`, { cls: 'narrow', closable: false });
     return;
   }
   if (st.status === 'question') {
@@ -951,7 +958,7 @@ function runQuiz(n, done) {
         Snd.sfx('wrong');
         perfect = false;
         b.classList.add('wrong'); b.disabled = true;
-        fb.innerHTML = `<div class="quiz-fb no"><b class="jua">다시 생각해요</b> · 엽서에서 힌트를 찾아볼까?</div><div class="modal-actions"><button class="pill" id="qCard">관련 엽서 펼치기</button></div>`;
+        fb.innerHTML = `<div class="quiz-fb no m-hint">${MASCOT_TAG()}<span><b class="jua">다시 생각해요</b><br>${MASCOT_NAME}: 엽서에 힌트가 있어! 같이 펼쳐 볼까?</span></div><div class="modal-actions"><button class="pill" id="qCard">관련 엽서 펼치기</button></div>`;
         $('#qCard').addEventListener('click', () => {
           collectCard(q.card);
           openPostcard(q.card, { timed: false, onClose: () => ask() });
@@ -988,7 +995,8 @@ function drawCertificate(canvas, cert) {
   ctx.fillRect(0, sea, W, H - sea);
   A.drawFarIslands(ctx, W * 0.78, sea, 1.4);
   A.drawSeal(ctx, W * 0.17, sea - 40, 1.9, { kind: 'mom', onRock: false, t: 0, swim: 0 });
-  A.drawSeal(ctx, W * 0.3, sea - 10, 1.3, { kind: 'kang', onRock: false, t: 0, swim: 0, mood: 'happy' });
+  A.drawSeal(ctx, W * 0.3, sea - 10, 1.3, { kind: 'kang', onRock: false, t: 0, swim: 0, mood: 'happy', acc: { ...(save.acc || {}), skin: null } });
+  A.drawMascot(ctx, W - 175, 230, 190, { t: 0, swim: 0 });
   ctx.restore();
   ctx.fillStyle = d.ink; ctx.textAlign = 'center';
   ctx.font = '48px "Jua", sans-serif';
@@ -1042,6 +1050,7 @@ function openCertificate(onClose) {
   const redraw = () => { cert.nickname = $('#cNick').value; cert.school = $('#cSchool').value; drawCertificate(cv, { ...cert, cards: save.cards.length, dex: dexCount() }); };
   redraw();
   document.fonts?.ready.then(redraw);
+  if (!A.MASCOT_IMG.complete) A.MASCOT_IMG.addEventListener('load', redraw, { once: true });
   $('#cNick').addEventListener('input', redraw);
   $('#cSchool').addEventListener('input', redraw);
   $$('.designs button', modalBox).forEach(b => b.addEventListener('click', () => { cert.design = b.dataset.d; $$('.designs button', modalBox).forEach(x => x.classList.toggle('on', x === b)); redraw(); }));
@@ -1238,6 +1247,18 @@ modal.addEventListener('click', (e) => { if (e.target === modal && modalEscClose
 refreshTitle();
 resize();
 syncNow();
+
+// 처음 화면 마스코트가 번갈아 말해요
+const MASCOT_LINES = [
+  '안녕! 강치 가족과 함께 독도 탐험을 떠나 볼까?',
+  '10월 25일은 독도의 날! 1900년 칙령 제41호를 기억해요.',
+  '낱말 엽서를 모으면 독도를 더 잘 알 수 있어!',
+  '별 ★을 모으면 강치 꾸미기 아이템이 열려!',
+  '탐험을 수료하면 나로 변신할 수도 있어 😉',
+];
+let mascotI = 0;
+$('#titleMascot').addEventListener('click', () => { mascotI++; $('#mascotTalk').textContent = MASCOT_LINES[mascotI % MASCOT_LINES.length]; Snd.sfx('click'); });
+setInterval(() => { if (screen === 'title') { mascotI++; $('#mascotTalk').textContent = MASCOT_LINES[mascotI % MASCOT_LINES.length]; } }, 7000);
 
 // 테스트·디버그용
 window.__dokdo = { get world() { return world; }, startChapter, startFree, playStory, save: () => save, openCertificate, finishChapter, openDressUp, openChapterSelect, refreshClassGoal, pollQuiz };

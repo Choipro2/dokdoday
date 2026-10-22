@@ -71,9 +71,9 @@ vercel --prod
 
 | 반 | 학생 링크 | 선생님 현황판 | 퀴즈 대결 | 비밀번호 |
 |---|---|---|---|---|
-| 4학년 1반 | dokdoday.vercel.app/41 | dokdoday.vercel.app/41/class | dokdoday.vercel.app/41/quiz | 7351 |
+| 4학년 1반 | dokdoday.vercel.app/41 | dokdoday.vercel.app/41/class | dokdoday.vercel.app/41/quiz | 1025 |
 | 4학년 2반 | dokdoday.vercel.app/42 | dokdoday.vercel.app/42/class | dokdoday.vercel.app/42/quiz | 1025 |
-| 4학년 3반 | dokdoday.vercel.app/43 | dokdoday.vercel.app/43/class | dokdoday.vercel.app/43/quiz | 2968 |
-| 4학년 4반 | dokdoday.vercel.app/44 | dokdoday.vercel.app/44/class | dokdoday.vercel.app/44/quiz | 5847 |
+| 4학년 3반 | dokdoday.vercel.app/43 | dokdoday.vercel.app/43/class | dokdoday.vercel.app/43/quiz | 1025 |
+| 4학년 4반 | dokdoday.vercel.app/44 | dokdoday.vercel.app/44/class | dokdoday.vercel.app/44/quiz | 1025 |
 
 - 링크로 한 번 들어온 기기는 반을 기억해요. 링크 없이 처음 들어온 기기는 탐험가 등록 때 반을 골라요.

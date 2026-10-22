@@ -24,8 +24,25 @@ const SEAL_COLORS = {
 };
 
 // 강이 꾸미기 (main.js에서 setKangAcc 로 정해요)
-let KANG_ACC = { head: null, neck: null };
-export function setKangAcc(acc) { KANG_ACC = { head: null, neck: null, ...(acc || {}) }; }
+let KANG_ACC = { head: null, neck: null, skin: null };
+export function setKangAcc(acc) { KANG_ACC = { head: null, neck: null, skin: null, ...(acc || {}) }; }
+
+// ---------- 우리 학교 마스코트 ----------
+export const MASCOT_IMG = new Image();
+MASCOT_IMG.src = 'mascot.png';
+// size = 그림 높이(px) · dir = 바라보는 방향
+export function drawMascot(ctx, x, y, size, opt = {}) {
+  const { dir = 1, t = 0, swim = 1, angle = 0, hurt = 0 } = opt;
+  if (!MASCOT_IMG.complete || !MASCOT_IMG.naturalWidth) return;
+  ctx.save();
+  ctx.translate(x, y + Math.sin(t * 3) * size * 0.03);
+  ctx.rotate(angle * 0.5 + Math.sin(t * 6) * 0.05 * swim);
+  ctx.scale(dir, 1);
+  if (hurt > 0 && Math.floor(t * 20) % 2 === 0) ctx.globalAlpha *= 0.5;
+  const w = size * (MASCOT_IMG.naturalWidth / MASCOT_IMG.naturalHeight);
+  ctx.drawImage(MASCOT_IMG, -w / 2, -size / 2, w, size);
+  ctx.restore();
+}
 
 function drawNeckAcc(ctx, id, t) {
   if (!id) return;
@@ -97,6 +114,11 @@ function drawHeadAcc(ctx, id, t) {
 }
 
 export function drawSeal(ctx, x, y, s, opt = {}) {
+  // 마스코트로 변신했으면 강이 대신 마스코트를 그려요
+  if ((opt.kind || 'kang') === 'kang' && (opt.acc ? opt.acc.skin : KANG_ACC.skin) === 'mascot') {
+    drawMascot(ctx, x, y - 6 * s, 92 * s, { dir: opt.dir || 1, t: opt.t || 0, swim: opt.swim ?? 1, angle: opt.angle || 0, hurt: opt.hurt || 0 });
+    return;
+  }
   const { kind = 'kang', dir = 1, angle = 0, t = 0, swim = 1, hurt = 0, onRock = false, mood = 'normal' } = opt;
   const c = SEAL_COLORS[kind] || SEAL_COLORS.kang;
   ctx.save();

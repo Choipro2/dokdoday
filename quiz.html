@@ -132,7 +132,7 @@ function render() {
   lastSig = sig;
 
   if (status === 'idle') {
-    stage.innerHTML = `<div class="center"><div style="font-size:90px">🦭⚡</div><h2 class="big">독도 퀴즈 대결</h2>
+    stage.innerHTML = `<div class="center"><img src="mascot.png" alt="" style="width:160px"><h2 class="big">독도 퀴즈 대결</h2>
       <p style="font-size:20px">엽서와 이야기에서 배운 내용으로 ${CLASS_NAME} 친구들과 겨뤄요.<br>빨리 맞힐수록 점수가 높아요 (문제당 ${LIMIT}초).</p>
       <p>문제 수 <select id="qn">${[5, 8, 10, 12, 16].map(n => `<option ${n === 10 ? 'selected' : ''}>${n}</option>`).join('')}</select></p>
       <div class="actions"><button class="btn" id="open">대결 열기</button></div>
@@ -147,7 +147,7 @@ function render() {
   const qs = st.qs || [];
   if (status === 'lobby') {
     const j = joined();
-    stage.innerHTML = `<div class="center"><h2 class="big" style="font-size:46px">친구들이 들어오고 있어요</h2>
+    stage.innerHTML = `<div class="center"><img src="mascot.png" alt="" style="width:110px"><h2 class="big" style="font-size:46px">친구들이 들어오고 있어요</h2>
       <p style="font-size:22px">게임 화면 위쪽 노란 알림 <b>‘참여하기’</b>를 눌러요 · 참가 <b class="jua" style="font-size:34px">${j.length}</b>명</p></div>
       <div class="join-grid">${j.map(a => `<div><b>${a.number ?? ''}</b>${esc(a.nickname)}</div>`).join('')}</div>
       <div class="actions"><button class="btn" id="go" ${j.length ? '' : 'disabled'}>시작하기 (${qs.length}문제)</button></div>`;
