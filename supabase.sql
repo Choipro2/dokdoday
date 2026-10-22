@@ -46,4 +46,4 @@ create policy "dokdo players read"   on public.dokdo_players  for select using (
 create policy "dokdo players insert" on public.dokdo_players  for insert with check (char_length(nickname) <= 12);
 create policy "dokdo players update" on public.dokdo_players  for update using (true) with check (char_length(nickname) <= 12);
 create policy "dokdo runs read"      on public.dokdo_free_runs for select using (true);
-create policy "dokdo runs insert"    on public.dokdo_free_runs for insert with check (char_length(nickname) <= 12 and ms > 60000);
+create policy "dokdo runs insert"    on public.dokdo_free_runs for insert with check (char_length(nickname) <= 12 and ms > 5000);

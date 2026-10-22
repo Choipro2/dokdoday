@@ -23,6 +23,79 @@ const SEAL_COLORS = {
   other: { body: '#7a6250', belly: '#c9ab8c', dark: '#4e3a2c' },
 };
 
+// 강이 꾸미기 (main.js에서 setKangAcc 로 정해요)
+let KANG_ACC = { head: null, neck: null };
+export function setKangAcc(acc) { KANG_ACC = { head: null, neck: null, ...(acc || {}) }; }
+
+function drawNeckAcc(ctx, id, t) {
+  if (!id) return;
+  ctx.save();
+  if (id === 'scarf') {
+    ctx.fillStyle = '#d6453d';
+    ctx.beginPath(); ctx.ellipse(22, -4, 9, 17, -0.25, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(18, 6); ctx.quadraticCurveTo(8 + Math.sin(t * 4) * 3, 20, 2, 26); ctx.lineTo(10, 26); ctx.quadraticCurveTo(16, 18, 24, 8); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(16, -16, 3, 24);
+  } else if (id === 'medal') {
+    ctx.strokeStyle = '#2f6fb0'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(16, -18); ctx.quadraticCurveTo(22, 6, 30, 8); ctx.stroke();
+    ctx.fillStyle = '#f2c43a'; ctx.beginPath(); ctx.arc(28, 12, 6.5, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#c9971f'; ctx.beginPath(); ctx.arc(28, 12, 3.2, 0, TAU); ctx.fill();
+  } else if (id === 'ribbon') {
+    ctx.fillStyle = '#ff7eb0';
+    ctx.beginPath(); ctx.moveTo(24, 0); ctx.lineTo(12, -8); ctx.lineTo(12, 8); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(24, 0); ctx.lineTo(36, -8); ctx.lineTo(36, 8); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#e0508a'; ctx.beginPath(); ctx.arc(24, 0, 4, 0, TAU); ctx.fill();
+  } else if (id === 'shell') {
+    ctx.strokeStyle = '#f3e6c8'; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(14, -16); ctx.quadraticCurveTo(22, 8, 32, 4); ctx.stroke();
+    ['#ffd6c9', '#fff1d6', '#d6ecff'].forEach((c, i) => {
+      ctx.fillStyle = c; ctx.beginPath(); ctx.arc(17 + i * 6, -2 + i * 3, 3.6, Math.PI, TAU); ctx.fill();
+    });
+  }
+  ctx.restore();
+}
+function drawHeadAcc(ctx, id, t) {
+  if (!id) return;
+  ctx.save();
+  if (id === 'straw') {
+    ctx.fillStyle = '#e8c46a';
+    ctx.beginPath(); ctx.ellipse(34, -27, 22, 5, -0.2, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(33, -33, 12, 9, -0.2, Math.PI, TAU); ctx.fill();
+    ctx.fillStyle = '#d6453d'; ctx.save(); ctx.translate(33, -31); ctx.rotate(-0.2); ctx.fillRect(-12, -2, 24, 4); ctx.restore();
+  } else if (id === 'goggles') {
+    ctx.strokeStyle = '#2b3a4a'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(20, -20); ctx.lineTo(36, -19); ctx.stroke();
+    ctx.fillStyle = 'rgba(120,210,255,.55)'; ctx.strokeStyle = '#ffb02e'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.ellipse(42, -18, 7, 7.5, 0, 0, TAU); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(39.5, -21, 2, 0, TAU); ctx.fill();
+  } else if (id === 'sailor') {
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.ellipse(33, -27, 15, 4.5, -0.2, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(33, -31, 11, 7, -0.2, Math.PI, TAU); ctx.fill();
+    ctx.fillStyle = '#1f4f8f'; ctx.save(); ctx.translate(33, -28.5); ctx.rotate(-0.2); ctx.fillRect(-11, -1.5, 22, 3); ctx.restore();
+    ctx.fillStyle = '#1f4f8f'; ctx.beginPath(); ctx.arc(32, -38, 2.4, 0, TAU); ctx.fill();
+  } else if (id === 'aster') {
+    for (let p = 0; p < 8; p++) {
+      const a = (p / 8) * TAU;
+      ctx.fillStyle = '#b7a3e0';
+      ctx.beginPath(); ctx.ellipse(26 + Math.cos(a) * 5, -27 + Math.sin(a) * 5, 4, 2.2, a, 0, TAU); ctx.fill();
+    }
+    ctx.fillStyle = '#f2c43a'; ctx.beginPath(); ctx.arc(26, -27, 3, 0, TAU); ctx.fill();
+  } else if (id === 'crown') {
+    ctx.fillStyle = '#f2c43a'; ctx.strokeStyle = '#c9971f'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(22, -26); ctx.lineTo(24, -40); ctx.lineTo(30, -32); ctx.lineTo(35, -44); ctx.lineTo(39, -32); ctx.lineTo(45, -39); ctx.lineTo(45, -25); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ['#e0508a', '#3a8fd6', '#5bbf6a'].forEach((c, i) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(27 + i * 7, -29, 2.2, 0, TAU); ctx.fill(); });
+  } else if (id === 'rainbow') {
+    ['#ff6b6b', '#ffb84d', '#ffe066', '#6bd17a', '#5aa9f0', '#9b7bea'].forEach((c, i) => {
+      ctx.strokeStyle = c; ctx.lineWidth = 2.2;
+      ctx.beginPath(); ctx.arc(36, -14, 22 - i * 2.2, Math.PI * 1.08, Math.PI * 1.85); ctx.stroke();
+    });
+    ctx.fillStyle = 'rgba(255,255,255,.9)';
+    for (let i = 0; i < 3; i++) { const a = t * 2 + i * 2; ctx.beginPath(); ctx.arc(36 + Math.cos(a) * 26, -26 + Math.sin(a) * 8, 1.6, 0, TAU); ctx.fill(); }
+  }
+  ctx.restore();
+}
+
 export function drawSeal(ctx, x, y, s, opt = {}) {
   const { kind = 'kang', dir = 1, angle = 0, t = 0, swim = 1, hurt = 0, onRock = false, mood = 'normal' } = opt;
   const c = SEAL_COLORS[kind] || SEAL_COLORS.kang;
@@ -66,6 +139,9 @@ export function drawSeal(ctx, x, y, s, opt = {}) {
   ctx.bezierCurveTo(-10, 22, 20, 20, 32, 10);
   ctx.bezierCurveTo(20, 14, -10, 14, -36, 12);
   ctx.fill();
+
+  const acc = opt.acc || (kind === 'kang' ? KANG_ACC : null);
+  if (acc) drawNeckAcc(ctx, acc.neck, t);
 
   // 머리
   ctx.fillStyle = c.body;
@@ -126,6 +202,8 @@ export function drawSeal(ctx, x, y, s, opt = {}) {
     ctx.lineTo(46, -27);
     ctx.stroke();
   }
+
+  if (acc) drawHeadAcc(ctx, acc.head, t);
 
   // 앞지느러미
   ctx.save();

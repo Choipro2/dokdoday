@@ -24,6 +24,7 @@
     <h1 class="logo">Dokdo-day</h1>
     <div class="logo-sub">잊지말아야 할 우리의 땅</div>
   </div>
+  <div class="class-goal" id="classGoal" style="display:none"></div>
   <div class="title-menu">
     <div class="title-buttons">
       <button class="pill big primary" data-act="new">게임 시작</button>
@@ -36,6 +37,8 @@
       <button data-act="guide">독도가 궁금해요</button>
       <button data-act="free">자유 탐험</button>
       <button data-act="book">기록책</button>
+      <button data-act="chapters" id="lnkChapters">장 고르기 ★</button>
+      <button data-act="dress" id="lnkDress">강치 꾸미기</button>
     </div>
   </div>
 </section>
@@ -109,6 +112,9 @@
     <button class="next" id="storyNext">계속 ›</button>
   </div>
 </section>
+
+<!-- ============ 퀴즈 대결 알림 ============ -->
+<button id="quizBanner" style="display:none">⚡ 선생님이 퀴즈 대결을 열었어요! <b>참여하기 ›</b></button>
 
 <!-- ============ 가로 화면 안내 ============ -->
 <div id="rotate">

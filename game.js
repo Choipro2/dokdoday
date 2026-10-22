@@ -36,7 +36,7 @@ export class World {
     this.pressed = {};
     this.observing = null;
     this.cam = { x: 0, y: 0 };
-    this.stats = { food: 0, observed: new Set(), cards: 0, eatenIds: new Set() };
+    this.stats = { food: 0, observed: new Set(), cards: 0, eatenIds: new Set(), hits: 0, faints: 0 };
     this.tutorial = null;
     this.mentorMsg = null;
 
@@ -538,7 +538,7 @@ export class World {
     const p = this.player;
     if (p.hurt > 0) return;
     if (this.effects.shield) { this.popup(p.x, p.y - 40, '보호막!', '#bff3ff'); delete this.effects.shield; p.hurt = 0.8; return; }
-    p.health -= n; p.hurt = 1.2;
+    p.health -= n; p.hurt = 1.2; this.stats.hits++;
     sfx('hurt');
     if (src) this.knock(src, 240);
     if (msg) this.toast(msg);
@@ -547,6 +547,7 @@ export class World {
   }
   faint() {
     const p = this.player;
+    this.stats.faints++;
     p.health = 100;
     p.x = this.checkpoint.x; p.y = this.checkpoint.y; p.vx = p.vy = 0; p.state = 'swim'; p.rock = null;
     this.toast('바위 틈에서 숨을 고르고 다시 출발! 모은 기록은 그대로예요');

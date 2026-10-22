@@ -265,3 +265,57 @@ body.is-touch .hud-keys { display: none; }
 .nums { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 6px; }
 .nums button { padding: 9px 0; border-radius: 10px; background: #eaf6fb; font-family: 'Jua'; font-size: 17px; color: var(--ink); }
 .nums button.on { background: var(--deep); color: #fff; }
+
+/* ---------- 별점 ---------- */
+.stars i { font-style: normal; color: rgba(18,61,77,.18); margin: 0 2px; }
+.stars i.on { color: #ffbf2e; text-shadow: 0 2px 0 #d68f00; }
+.star-list { list-style: none; padding: 0; margin: 10px auto; max-width: 360px; }
+.star-list li { padding: 8px 12px; border-radius: 12px; margin-top: 6px; background: #f1ede3; color: #8a8a8a; font-size: 16px; }
+.star-list li.ok { background: #fff3d1; color: var(--ink); }
+.unlock { margin-top: 12px; padding: 12px 14px; border-radius: 14px; background: #e9f7ee; text-align: center; font-size: 16px; }
+.ch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.ch-grid button { text-align: left; padding: 12px 14px; border-radius: 16px; background: #eaf6fb; color: var(--ink); }
+.ch-grid button:disabled { opacity: .45; cursor: default; }
+.ch-grid small { display: block; color: #4b7488; font-size: 12px; }
+.ch-grid b { display: block; font-family: 'Jua'; font-weight: 400; font-size: 19px; margin: 2px 0 4px; }
+.ch-grid em { display: block; font-style: normal; font-size: 12px; color: #9a9a9a; }
+
+/* ---------- 꾸미기 ---------- */
+.dress { display: grid; grid-template-columns: 1fr 1.3fr; gap: 18px; align-items: start; margin-top: 10px; }
+.dress > canvas { width: 100%; border-radius: 20px; }
+.acc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-top: 8px; }
+.acc-grid button { padding: 6px; border-radius: 14px; background: #fff; border: 2px solid #e2ecf0; color: var(--ink); text-align: center; }
+.acc-grid button.on { border-color: var(--deep); background: #eaf6fb; }
+.acc-grid button:disabled { opacity: .55; cursor: default; }
+.acc-grid canvas { width: 100%; border-radius: 10px; }
+.acc-grid b { display: block; font-family: 'Jua'; font-weight: 400; font-size: 15px; }
+.acc-grid small { display: block; font-size: 11px; color: #5d7682; min-height: 28px; }
+
+/* ---------- 협동 목표 ---------- */
+.class-goal { position: absolute; right: 18px; top: 18px; width: min(330px, 40vw); padding: 12px 14px; border-radius: 18px; background: rgba(255,250,238,.92); color: var(--ink); box-shadow: 0 6px 18px rgba(0,0,0,.18); font-size: 13px; z-index: 3; }
+.cg-title { font-family: 'Jua'; font-size: 16px; color: var(--deep); }
+.cg-title small { color: #3f9b5a; font-size: 13px; margin-left: 4px; }
+.cg-bar { position: relative; height: 12px; border-radius: 8px; background: #dfe9ee; margin: 10px 0 8px; }
+.cg-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 8px; background: linear-gradient(90deg, #5fb0d8, #3f9b5a); }
+.cg-bar span { position: absolute; top: -7px; transform: translateX(-50%); font-size: 18px; color: #b9c6cc; }
+.cg-bar span.on { color: #ffbf2e; }
+.cg-text { line-height: 1.5; }
+@media (max-height: 560px) { .class-goal { display: none !important; } }
+
+/* ---------- 퀴즈 대결 (학생) ---------- */
+#quizBanner { position: fixed; left: 50%; top: 12px; transform: translateX(-50%); z-index: 60; padding: 12px 22px; border-radius: 26px; background: #ffcf5a; color: var(--ink); font-family: 'Jua'; font-size: 18px; box-shadow: 0 8px 24px rgba(0,0,0,.3); animation: qzPulse 1.2s ease-in-out infinite; }
+#quizBanner b { font-weight: 400; color: #b0573f; }
+@keyframes qzPulse { 50% { transform: translateX(-50%) scale(1.05); } }
+.qz-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+.qz-opts button { min-height: 96px; padding: 14px 18px; border-radius: 18px; color: #fff; font-family: 'Jua'; font-size: 22px; text-align: left; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 0 rgba(0,0,0,.2); }
+.qz-opts button b { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.3); font-weight: 400; flex: none; }
+.qz-opts .c0 { background: #e2574c; } .qz-opts .c1 { background: #2f86c9; } .qz-opts .c2 { background: #e8a51f; } .qz-opts .c3 { background: #3f9b5a; }
+.qz-opts button:disabled { opacity: .35; } .qz-opts button.picked { opacity: 1; outline: 5px solid #123d4d; }
+.qz-wait { text-align: center; padding: 20px 0; font-size: 48px; } .qz-wait p { font-size: 18px; line-height: 1.6; margin: 10px 0 0; }
+.qz-me { display: flex; flex-direction: column; align-items: center; margin-top: 14px; padding: 14px; border-radius: 18px; background: #eaf6fb; }
+.qz-me b { font-family: 'Jua'; font-weight: 400; font-size: 44px; color: var(--deep); }
+.qz-me.big b { font-size: 60px; }
+.qz-top { list-style: none; padding: 0; margin: 14px 0 0; }
+.qz-top li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: #fff7e3; margin-top: 6px; font-size: 17px; }
+.qz-top b { margin-left: auto; font-family: 'Jua'; font-weight: 400; }
+@media (max-width: 760px) { .dress { grid-template-columns: 1fr; } .qz-opts button { font-size: 18px; min-height: 72px; } }

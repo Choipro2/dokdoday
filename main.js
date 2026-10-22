@@ -1,7 +1,7 @@
 // =============================================================
 //  강치와 독도 · 화면 흐름 (메뉴 · 이야기 · 모달 · 저장)
 // =============================================================
-import { STAGES, CREATURES, CREATURE, POSTCARDS, POSTCARD, CHAPTERS, QUIZZES, STORY, SPEAKERS, GUIDE, CERT_DESIGNS, FREE_LEVELS } from './data.js';
+import { STAGES, CREATURES, CREATURE, POSTCARDS, POSTCARD, CHAPTERS, QUIZZES, STORY, SPEAKERS, GUIDE, CERT_DESIGNS, FREE_LEVELS, ACCESSORIES, CLASS_GOALS, BATTLE_QUESTIONS } from './data.js';
 import * as A from './art.js';
 import * as Snd from './audio.js';
 import { World, storyConfig, freeConfig } from './game.js';
@@ -18,7 +18,7 @@ const VOL_KEY = 'dokdoday-volume-v1';
 // ---------- 저장 ----------
 function loadJSON(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } }
 function saveJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* 저장 불가 */ } }
-function freshSave() { return { chapter: 1, started: false, cards: [], dex: {}, done: false, tutorialDone: false, cert: null }; }
+function freshSave() { return { chapter: 1, started: false, cards: [], dex: {}, done: false, tutorialDone: false, cert: null, stars: {}, acc: { head: null, neck: null }, seenAcc: [] }; }
 let save = Object.assign(freshSave(), loadJSON(SAVE_KEY, {}));
 function persist() { saveJSON(SAVE_KEY, save); syncNow(); }
 
@@ -31,7 +31,7 @@ function syncNow() {
   Net.syncProgress({
     id: profile.id, number: profile.number, nickname: profile.nickname,
     chapter: save.done ? 5 : (save.started ? save.chapter : 0),
-    cards: save.cards.length, dex: Object.keys(save.dex).length, done: !!save.done,
+    cards: save.cards.length, dex: Object.keys(save.dex).length, done: !!save.done, stars: totalStars(),
     cert_design: (save.cert && save.cert.public !== false) ? save.cert.design : null, best_free_ms: profile.best || null,
   });
 }
@@ -62,6 +62,7 @@ function ensureProfile(next, force = false) {
   });
 }
 Snd.loadVolume(loadJSON(VOL_KEY, {}));
+A.setKangAcc(save.acc);
 
 // ---------- 화면 전환 ----------
 let screen = 'title';
@@ -454,7 +455,7 @@ function openPause() {
   bindSettings();
   $('#pFull').addEventListener('click', toggleFull);
   $('#pHome').addEventListener('click', () => { closeModal(); goTitle(); });
-  $('#pRestart')?.addEventListener('click', () => { closeModal(); world.faint(); world.player.x = world.cfg.startX; world.player.y = 60; });
+  $('#pRestart')?.addEventListener('click', () => { closeModal(); world.faint(); world.stats.faints--; world.player.x = world.cfg.startX; world.player.y = 60; });
 }
 function openSettings() {
   openModal(`<div class="eyebrow">환경설정</div><h2>둘러보기 설정</h2>${settingsHTML()}
@@ -649,9 +650,11 @@ const worldHooks = {
   freeDone: (ms) => openFreeResult(ms),
 };
 
-function startChapter(n) {
+let replayMode = false;
+function startChapter(n, opt = {}) {
   chapter = CHAPTERS[n - 1];
-  save.chapter = n; save.started = true; persist();
+  replayMode = !!opt.replay;
+  if (!replayMode) { save.chapter = n; save.started = true; persist(); }
   const tutorial = n === 1 && !save.tutorialDone;
   world = new World(storyConfig(chapter, { tutorial }), worldHooks);
   $('#hudChapter').textContent = `${chapter.n}장 · ${chapter.label}`;
@@ -663,23 +666,255 @@ function startChapter(n) {
 function finishChapter() {
   const n = chapter.n;
   world.paused = true;
+  const st = world.stats;
   playStory(`ch${n}_end`, () => {
-    runQuiz(n, () => {
-      if (n < 4) {
-        save.chapter = n + 1; persist();
-        playStory(`ch${n + 1}_start`, () => startChapter(n + 1));
-      } else {
-        save.chapter = 5; persist();
-        playStory('epilogue', () => { save.done = true; persist(); world = null; show('title'); openCertificate(() => goTitle()); });
-      }
+    runQuiz(n, (perfect) => {
+      const got = [true, st.faints === 0 && st.hits <= 3, perfect];
+      const stars = got.filter(Boolean).length;
+      const before = totalStars();
+      const prev = save.stars[n] || 0;
+      if (stars > prev) save.stars[n] = stars;
+      persist();
+      const after = () => {
+        if (replayMode) { replayMode = false; world = null; show('title'); refreshTitle(); openChapterSelect(); return; }
+        if (n < 4) {
+          save.chapter = n + 1; persist();
+          playStory(`ch${n + 1}_start`, () => startChapter(n + 1));
+        } else {
+          save.chapter = 5; persist();
+          playStory('epilogue', () => { save.done = true; save.everDone = true; persist(); world = null; show('title'); refreshTitle(); openCertificate(() => { goTitle(); checkUnlocks(); }); });
+        }
+      };
+      showStarResult(n, got, prev, before, after);
     });
   });
 }
 
+// ---------- 별점 결과 ----------
+function totalStars() { return Object.values(save.stars || {}).reduce((a, b) => a + b, 0); }
+function starRow(k, size = 34) { return `<span class="stars" style="font-size:${size}px">${[0, 1, 2].map(i => `<i class="${i < k ? 'on' : ''}">★</i>`).join('')}</span>`; }
+function showStarResult(n, got, prev, beforeTotal, next) {
+  const k = got.filter(Boolean).length;
+  const labels = ['장 끝까지 탐험하기', '다친 횟수 3번 이하 · 쓰러지지 않기', '퀴즈를 첫 번에 모두 맞히기'];
+  Snd.sfx(k === 3 ? 'grow' : 'portal');
+  const newly = checkUnlocks(true);
+  openModal(`<div class="eyebrow">${n}장 · ${CHAPTERS[n - 1].label}</div><h2>탐험 결과</h2>
+    <div style="text-align:center;margin:10px 0">${starRow(k, 56)}</div>
+    ${k > prev && prev ? `<p style="text-align:center" class="jua">기록 경신! ★${prev} → ★${k}</p>` : ''}
+    <ul class="star-list">${labels.map((l, i) => `<li class="${got[i] ? 'ok' : ''}">${got[i] ? '★' : '☆'} ${l}</li>`).join('')}</ul>
+    <p style="text-align:center" class="muted">모은 별 ${totalStars()} / 12</p>
+    ${newly.length ? `<div class="unlock">🎁 새 꾸미기 아이템: <b>${newly.map(a => a.name).join(', ')}</b><br><small>처음 화면 ‘강치 꾸미기’에서 달아 줄 수 있어요</small></div>` : ''}
+    <div class="modal-actions">
+      ${k < 3 && (replayMode || n < 4) ? `<button class="pill" id="srRetry">이 장 다시 도전</button>` : ''}
+      <button class="pill dark" id="srNext">${replayMode ? '장 고르기로' : (n < 4 ? '다음 이야기로' : '에필로그로')}</button>
+    </div>`, { cls: 'narrow', closable: false });
+  $('#srNext').addEventListener('click', () => { closeModal(); next(); });
+  $('#srRetry')?.addEventListener('click', () => {
+    closeModal();
+    // 진행은 그대로 두고 같은 장을 다시 해요
+    if (!replayMode && n < 4) { save.chapter = n + 1; persist(); }
+    playStory(`ch${n}_start`, () => startChapter(n, { replay: true }));
+  });
+}
+
+// ---------- 장 고르기 ----------
+function openChapterSelect() {
+  const reached = save.done ? 4 : Math.min(4, save.chapter);
+  openModal(`<div class="eyebrow">장 고르기 · 별 모으기</div><h2>어느 바다를 다시 탐험할까요?</h2>
+    <p class="muted">이미 지나간 장을 다시 하면서 별을 더 모을 수 있어요. 진행 기록은 그대로예요.</p>
+    <div class="ch-grid">${CHAPTERS.map(c => {
+      const open = c.n <= reached && (c.n < reached || save.stars[c.n] || save.done);
+      return `<button data-ch="${c.n}" ${open ? '' : 'disabled'}><small>${c.n}장 · ${c.year}</small><b>${c.label}</b>${starRow(save.stars[c.n] || 0, 22)}${open ? '' : '<em>아직 잠겨 있어요</em>'}</button>`;
+    }).join('')}</div>
+    <p style="text-align:center;margin-top:10px">모은 별 <b class="jua">${totalStars()} / 12</b></p>
+    <div class="modal-actions"><button class="pill" data-close>닫기</button></div>`, { cls: 'narrow' });
+  $$('.ch-grid button', modalBox).forEach(b => b.addEventListener('click', () => {
+    const n = +b.dataset.ch;
+    closeModal();
+    playStory(`ch${n}_start`, () => startChapter(n, { replay: true }));
+  }));
+}
+
+// ---------- 강치 꾸미기 ----------
+function classLevel() { return loadJSON('dokdoday-class-level', 0); }
+function accUnlocked(a) {
+  const [k, v] = a.need.split(':');
+  if (k === 'stars') return totalStars() >= +v;
+  if (k === 'done') return !!(save.done || save.everDone);
+  if (k === 'free') return !!(profile?.best && profile.best <= +v);
+  if (k === 'class') return classLevel() >= +v;
+  return false;
+}
+// 새로 열린 아이템을 찾아 알려 줘요 (silent=true 면 목록만 돌려줘요)
+function checkUnlocks(silent = false) {
+  save.seenAcc = save.seenAcc || [];
+  const newly = ACCESSORIES.filter(a => accUnlocked(a) && !save.seenAcc.includes(a.id));
+  if (newly.length) {
+    save.seenAcc.push(...newly.map(a => a.id));
+    saveJSON(SAVE_KEY, save);
+    if (!silent) toast(`🎁 새 꾸미기 아이템: ${newly.map(a => a.name).join(', ')}`);
+  }
+  return newly;
+}
+function openDressUp() {
+  checkUnlocks(true);
+  const render = () => {
+    openModal(`<div class="eyebrow">강치 꾸미기</div><h2>강이에게 무엇을 달아 줄까요?</h2>
+      <div class="dress">
+        <canvas id="dressCv" width="520" height="360"></canvas>
+        <div>
+          <p class="muted">머리와 목에 하나씩 달 수 있어요. 별을 모으고, 수료하고, 우리 반 목표를 이루면 새 아이템이 열려요.</p>
+          <div class="acc-grid">${ACCESSORIES.map(a => {
+            const ok = accUnlocked(a), on = save.acc?.[a.slot] === a.id;
+            return `<button data-acc="${a.id}" class="${on ? 'on' : ''}" ${ok ? '' : 'disabled'}><canvas width="150" height="110"></canvas><b>${a.name}</b><small>${ok ? (on ? '달고 있어요 ✓' : (a.slot === 'head' ? '머리' : '목')) : '🔒 ' + a.desc}</small></button>`;
+          }).join('')}</div>
+        </div>
+      </div>
+      <div class="modal-actions"><button class="pill" id="dressNone">모두 빼기</button><button class="pill dark" data-close>다 했어요</button></div>`, { cls: 'wide' });
+    const cv = $('#dressCv'), ctx = cv.getContext('2d');
+    const g = ctx.createLinearGradient(0, 0, 0, cv.height); g.addColorStop(0, '#bfe6f5'); g.addColorStop(1, '#5fb0d8');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, cv.width, cv.height);
+    A.drawSeal(ctx, cv.width * 0.42, cv.height * 0.6, 3.2, { kind: 'kang', t: 0, swim: 0, mood: 'happy' });
+    $$('.acc-grid button', modalBox).forEach(b => {
+      const a = ACCESSORIES.find(x => x.id === b.dataset.acc);
+      const c2 = $('canvas', b), x2 = c2.getContext('2d');
+      x2.fillStyle = '#e3f3fa'; x2.fillRect(0, 0, c2.width, c2.height);
+      A.drawSeal(x2, c2.width * 0.3, c2.height * 0.72, 1.15, { kind: 'kang', t: 0, swim: 0, acc: { [a.slot]: a.id }, mood: 'happy' });
+      b.addEventListener('click', () => {
+        save.acc = save.acc || { head: null, neck: null };
+        save.acc[a.slot] = save.acc[a.slot] === a.id ? null : a.id;
+        A.setKangAcc(save.acc); saveJSON(SAVE_KEY, save); Snd.sfx('click');
+        render();
+      });
+    });
+    $('#dressNone').addEventListener('click', () => { save.acc = { head: null, neck: null }; A.setKangAcc(save.acc); saveJSON(SAVE_KEY, save); render(); });
+  };
+  render();
+}
+
+// ---------- 우리 반 협동 목표 ----------
+let classProg = null;
+async function refreshClassGoal() {
+  const box = $('#classGoal');
+  if (!Net.online) { box.style.display = 'none'; return; }
+  try {
+    classProg = await Net.fetchClassProgress();
+  } catch (e) { return; }
+  if (!classProg) return;
+  const cards = classProg.cards;
+  const lv = CLASS_GOALS.filter(g => cards >= g.need).length;
+  const prevLv = classLevel();
+  if (lv !== prevLv) { saveJSON('dokdoday-class-level', lv); if (lv > prevLv) checkUnlocks(); }
+  const next = CLASS_GOALS[lv];
+  const max = CLASS_GOALS[CLASS_GOALS.length - 1].need;
+  box.style.display = '';
+  box.innerHTML = `<div class="cg-title">🌊 ${CLASS_NAME} 협동 목표 <small>${lv ? `${lv}단계 달성!` : ''}</small></div>
+    <div class="cg-bar"><i style="width:${Math.min(100, cards / max * 100)}%"></i>${CLASS_GOALS.map(g => `<span class="${cards >= g.need ? 'on' : ''}" style="left:${g.need / max * 100}%" title="${g.name}">${cards >= g.need ? '★' : '☆'}</span>`).join('')}</div>
+    <div class="cg-text">함께 모은 낱말 엽서 <b>${cards}</b>장 · 수료 ${classProg.done}명 · 별 ${classProg.stars}개<br>${next ? `다음 목표 <b>${next.need}장</b> → 모두에게 <b>${ACCESSORIES.find(a => a.id === next.reward).name}</b>` : '모든 목표 달성! 우리 반 최고 🎉'}</div>`;
+}
+setInterval(() => { if (screen === 'title') refreshClassGoal(); }, 30000);
+
+// =============================================================
+//  실시간 퀴즈 대결 (학생)
+// =============================================================
+let quizState = null, quizJoined = null, quizOverlay = false, quizPollT = null, quizAnswered = {};
+async function pollQuiz() {
+  if (!Net.online) return;
+  try { quizState = await Net.getQuiz(); } catch (e) { return; }
+  const live = quizState && ['lobby', 'question', 'reveal', 'end'].includes(quizState.status);
+  const banner = $('#quizBanner');
+  banner.style.display = live && !quizOverlay && quizJoined !== quizState.session ? '' : 'none';
+  if (quizOverlay) renderQuiz();
+}
+setInterval(() => { if (!quizOverlay) pollQuiz(); }, 4000);
+setTimeout(pollQuiz, 1500);
+$('#quizBanner').addEventListener('click', () => ensureProfile(joinQuiz));
+async function joinQuiz() {
+  if (!quizState) return;
+  if (world) world.paused = true;
+  try { await Net.sendAnswer({ session: quizState.session, q_index: -1, player_id: profile.id, number: profile.number, nickname: profile.nickname, choice: -1 }); } catch (e) { /* 이미 참가 */ }
+  quizJoined = quizState.session;
+  quizAnswered = {};
+  quizOverlay = true;
+  $('#quizBanner').style.display = 'none';
+  quizView = '';
+  renderQuiz(true);
+  clearInterval(quizPollT);
+  quizPollT = setInterval(pollQuiz, 1200);
+}
+function leaveQuiz() {
+  quizOverlay = false;
+  clearInterval(quizPollT);
+  closeModal();
+  if (world) world.paused = false;
+}
+let quizView = '';
+let myQuizScore = null;
+async function renderQuiz(force = false) {
+  const st = quizState;
+  if (!st || st.session !== quizJoined || st.status === 'idle') {
+    openModal(`<h2>퀴즈 대결이 끝났어요</h2><p>선생님이 대결을 닫았어요. 다시 탐험하러 가요!</p><div class="modal-actions"><button class="pill dark" id="qzLeave">돌아가기</button></div>`, { cls: 'narrow', closable: false });
+    $('#qzLeave').addEventListener('click', leaveQuiz);
+    quizOverlay = false; clearInterval(quizPollT); quizView = '';
+    return;
+  }
+  const qs = st.qs || [];
+  const key = `${st.status}:${st.q_index}`;
+  if (key === quizView && !force) return;
+  quizView = key;
+  const head = `<div class="eyebrow">⚡ 실시간 퀴즈 대결 · ${esc(profileLabel())}</div>`;
+  if (st.status === 'lobby') {
+    openModal(`${head}<h2>참가 완료!</h2><div class="qz-wait">🦭<p>선생님이 문제를 시작하면 바로 나와요.<br>화면을 보고 기다려 주세요.</p></div>`, { cls: 'narrow', closable: false });
+    return;
+  }
+  if (st.status === 'question') {
+    const q = BATTLE_QUESTIONS[qs[st.q_index]];
+    if (quizAnswered[st.q_index] != null) {
+      openModal(`${head}<h2>${st.q_index + 1}번 답을 보냈어요</h2><div class="qz-wait">⏳<p>친구들이 답하는 중이에요.<br>선생님 화면에서 정답을 확인해요!</p></div>`, { cls: 'narrow', closable: false });
+      return;
+    }
+    openModal(`${head}<div class="quiz-prog">${st.q_index + 1} / ${qs.length}번 문제 · 빨리 맞힐수록 점수가 높아요</div>
+      <div class="quiz-q">${q.q}</div>
+      <div class="qz-opts">${q.o.map((o, k) => `<button data-k="${k}" class="c${k}"><b>${'ABCD'[k]}</b>${o}</button>`).join('')}</div>`, { cls: 'wide', closable: false });
+    $$('.qz-opts button', modalBox).forEach(b => b.addEventListener('click', async () => {
+      if (quizAnswered[st.q_index] != null) return;
+      quizAnswered[st.q_index] = +b.dataset.k;
+      $$('.qz-opts button', modalBox).forEach(x => { x.disabled = true; x.classList.toggle('picked', x === b); });
+      try { await Net.sendAnswer({ session: st.session, q_index: st.q_index, player_id: profile.id, number: profile.number, nickname: profile.nickname, choice: +b.dataset.k }); Snd.sfx('click'); }
+      catch (e) { toast('시간이 끝나 답을 받지 않았어요'); }
+      quizView = ''; renderQuiz(true);
+    }));
+    return;
+  }
+  // reveal · end : 내 점수 계산
+  let rows = [];
+  try { rows = Net.quizScores(await Net.getAnswers(st.session), qs, BATTLE_QUESTIONS, st.q_index); } catch (e) { /* 무시 */ }
+  const meIdx = rows.findIndex(r => r.player_id === profile.id);
+  const me = rows[meIdx] || { score: 0, right: 0 };
+  if (st.status === 'reveal') {
+    const q = BATTLE_QUESTIONS[qs[st.q_index]];
+    const mine = quizAnswered[st.q_index];
+    const ok = mine === q.a;
+    Snd.sfx(ok ? 'right' : 'wrong');
+    openModal(`${head}<h2>${ok ? '정답이에요! 🎉' : mine == null ? '시간이 끝났어요' : '아쉬워요!'}</h2>
+      <p class="quiz-q" style="font-size:20px">${q.q}</p>
+      <div class="quiz-fb ${ok ? 'ok' : 'no'}">정답: <b>${'ABCD'[q.a]}. ${q.o[q.a]}</b></div>
+      <div class="qz-me"><span>지금 내 점수</span><b>${me.score}</b><span>${meIdx >= 0 ? `${meIdx + 1}등 / ${rows.length}명` : ''}</span></div>`, { cls: 'narrow', closable: false });
+    return;
+  }
+  if (st.status === 'end') {
+    openModal(`${head}<h2>퀴즈 대결 끝!</h2>
+      <div class="qz-me big"><span>나의 순위</span><b>${meIdx >= 0 ? meIdx + 1 : '-'}등</b><span>${me.score}점 · ${me.right} / ${qs.length}문제 정답</span></div>
+      <ol class="qz-top">${rows.slice(0, 3).map((r, i) => `<li><span>${['🥇', '🥈', '🥉'][i]}</span>${r.number}번 ${esc(r.nickname)}<b>${r.score}</b></li>`).join('')}</ol>
+      <div class="modal-actions"><button class="pill dark" id="qzLeave">탐험으로 돌아가기</button></div>`, { cls: 'narrow', closable: false });
+    $('#qzLeave').addEventListener('click', () => { quizJoined = st.session; leaveQuiz(); });
+  }
+}
 // ---------- 퀴즈 ----------
 function runQuiz(n, done) {
   const qs = QUIZZES[n];
   let i = 0;
+  let perfect = true;
   const ask = () => {
     const q = qs[i];
     openModal(`<div class="eyebrow">${n}장 · 바다에서 배운 것 · 쉼터 포털</div>
@@ -696,9 +931,10 @@ function runQuiz(n, done) {
         $$('.quiz-o button', modalBox).forEach(x => x.disabled = true);
         b.classList.add('right');
         fb.innerHTML = `<div class="quiz-fb ok"><b class="jua">맞았어요! 함께 기억해요</b><br>${q.why}</div><div class="modal-actions"><button class="pill dark" id="qNext">${i + 1 < qs.length ? '다음 문제로' : '쉼터로 들어가기'}</button></div>`;
-        $('#qNext').addEventListener('click', () => { i++; if (i < qs.length) ask(); else { closeModal(); done(); } });
+        $('#qNext').addEventListener('click', () => { i++; if (i < qs.length) ask(); else { closeModal(); done(perfect); } });
       } else {
         Snd.sfx('wrong');
+        perfect = false;
         b.classList.add('wrong'); b.disabled = true;
         fb.innerHTML = `<div class="quiz-fb no"><b class="jua">다시 생각해요</b> · 엽서에서 힌트를 찾아볼까?</div><div class="modal-actions"><button class="pill" id="qCard">관련 엽서 펼치기</button></div>`;
         $('#qCard').addEventListener('click', () => {
@@ -857,7 +1093,7 @@ function openFreeResult(ms) {
   local.push({ nick: profile?.nickname || '탐험가', number: profile?.number, ms, date: new Date().toISOString().slice(0, 10), id: Date.now() });
   local.sort((x, y) => x.ms - y.ms);
   saveJSON(RANK_KEY, local.slice(0, 50));
-  if (isBest && profile) { profile.best = ms; saveJSON(PROFILE_KEY, profile); syncNow(); }
+  if (isBest && profile) { profile.best = ms; saveJSON(PROFILE_KEY, profile); syncNow(); checkUnlocks(); }
   const done = (async () => {
     if (!Net.online || !profile) { $('#rMsg') && ($('#rMsg').textContent = '기록을 저장했어요.'); return; }
     const ok = await Net.addFreeRun({ player_id: profile.id, number: profile.number, nickname: profile.nickname, ms });
@@ -924,18 +1160,22 @@ function refreshTitle() {
   const tag = $('#whoTag');
   tag.style.display = profile ? '' : 'none';
   tag.textContent = profile ? `탐험가 · ${profileLabel()} (바꾸기)` : '';
+  $('#lnkChapters').style.display = save.started || totalStars() ? '' : 'none';
+  $('#lnkDress').textContent = `강치 꾸미기${ACCESSORIES.some(accUnlocked) ? ' ✨' : ''}`;
+  A.setKangAcc(save.acc);
 }
 $('#whoTag').addEventListener('click', () => ensureProfile(() => {}, true));
 function goTitle() {
   world = null;
   show('title');
   refreshTitle();
+  refreshClassGoal();
 }
 function newGame(skipConfirm = false) {
   const go = () => {
-    const keep = { cert: save.cert };
+    const keep = { cert: save.cert, stars: save.stars, acc: save.acc, seenAcc: save.seenAcc, everDone: save.everDone || save.done };
     save = freshSave();
-    save.cert = keep.cert;
+    Object.assign(save, { cert: keep.cert, stars: keep.stars || {}, acc: keep.acc || { head: null, neck: null }, seenAcc: keep.seenAcc || [], everDone: !!keep.everDone });
     save.started = true;
     persist();
     playStory('prologue', () => playStory('ch1_start', () => startChapter(1)));
@@ -969,6 +1209,8 @@ document.addEventListener('click', (e) => {
     case 'guide': openGuide(0); break;
     case 'free': ensureProfile(() => openFreeIntro()); break;
     case 'book': openBook('cards'); break;
+    case 'chapters': ensureProfile(() => openChapterSelect()); break;
+    case 'dress': openDressUp(); break;
     case 'dex': openDex(); break;
     case 'pause': openPause(); break;
     case 'mute': { const m = Snd.toggleMute(); b.textContent = m ? '소리 꺼짐' : '소리 켜짐'; saveJSON(VOL_KEY, Snd.getVolume()); break; }
@@ -982,4 +1224,5 @@ refreshTitle();
 resize();
 
 // 테스트·디버그용
-window.__dokdo = { get world() { return world; }, startChapter, startFree, playStory, save: () => save, openCertificate, finishChapter };
+window.__dokdo = { get world() { return world; }, startChapter, startFree, playStory, save: () => save, openCertificate, finishChapter, openDressUp, openChapterSelect, refreshClassGoal, pollQuiz };
+refreshClassGoal();
