@@ -13,10 +13,10 @@ export const SUPABASE_ANON_KEY = 'sb_publishable_JkJ3soFv3kwrmX5vgzvu_w_OYnHWa-g
 //   pin  : 선생님 현황판·퀴즈 대결 비밀번호
 const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
 export const CLASSES = [
-  { key: '4-1', code: 'dongsung-4-1', name: '4학년 1반', numbers: range(1, 30), pin: '7351' },
+  { key: '4-1', code: 'dongsung-4-1', name: '4학년 1반', numbers: range(1, 30), pin: '1025' },
   { key: '4-2', code: 'dongsung-our-class', name: '4학년 2반', numbers: [...range(1, 16), ...range(41, 51), 53], pin: '1025' },
-  { key: '4-3', code: 'dongsung-4-3', name: '4학년 3반', numbers: range(1, 30), pin: '2968' },
-  { key: '4-4', code: 'dongsung-4-4', name: '4학년 4반', numbers: range(1, 30), pin: '5847' },
+  { key: '4-3', code: 'dongsung-4-3', name: '4학년 3반', numbers: range(1, 30), pin: '1025' },
+  { key: '4-4', code: 'dongsung-4-4', name: '4학년 4반', numbers: range(1, 30), pin: '1025' },
 ];
 const DEFAULT_KEY = '4-2';
 
