@@ -785,7 +785,7 @@ function openDressUp() {
       <div class="dress">
         <canvas id="dressCv" width="520" height="360"></canvas>
         <div>
-          <p class="muted">머리와 목에 하나씩 달 수 있어요. 별을 모으고, 수료하고, 우리 반 목표를 이루면 새 아이템이 열려요.${save.acc?.skin === 'mascot' ? '<br><b>지금 우리 학교 마스코트로 변신 중이에요!</b> (변신 중에는 모자·목걸이가 보이지 않아요)' : ''}</p>
+          <p class="muted">머리와 목에 하나씩 달 수 있어요. 별을 모으고, 수료하고, 우리 반 목표를 이루면 새 아이템이 열려요.${save.acc?.skin === 'mascot' ? `<br><b>지금 ${MASCOT_NAME}으로 변신 중이에요!</b> (변신 중에는 모자·목걸이가 보이지 않아요)` : ''}</p>
           <div class="acc-grid">${ACCESSORIES.map(a => {
             const ok = accUnlocked(a), on = save.acc?.[a.slot] === a.id;
             return `<button data-acc="${a.id}" class="${on ? 'on' : ''}" ${ok ? '' : 'disabled'}><canvas width="150" height="110"></canvas><b>${a.name}</b><small>${ok ? (on ? '달고 있어요 ✓' : ({ head: '머리', neck: '목', skin: '변신' }[a.slot])) : '🔒 ' + a.desc}</small></button>`;
@@ -1250,11 +1250,11 @@ syncNow();
 
 // 처음 화면 마스코트가 번갈아 말해요
 const MASCOT_LINES = [
-  '안녕! 강치 가족과 함께 독도 탐험을 떠나 볼까?',
+  '안녕! 나는 우리 학교 마스코트 파동이야. 강치 가족과 함께 독도 탐험을 떠나 볼까?',
   '10월 25일은 독도의 날! 1900년 칙령 제41호를 기억해요.',
   '낱말 엽서를 모으면 독도를 더 잘 알 수 있어!',
   '별 ★을 모으면 강치 꾸미기 아이템이 열려!',
-  '탐험을 수료하면 나로 변신할 수도 있어 😉',
+  '탐험을 수료하면 파동으로 변신할 수도 있어 😉',
 ];
 let mascotI = 0;
 $('#titleMascot').addEventListener('click', () => { mascotI++; $('#mascotTalk').textContent = MASCOT_LINES[mascotI % MASCOT_LINES.length]; Snd.sfx('click'); });

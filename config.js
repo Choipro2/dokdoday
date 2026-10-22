@@ -21,7 +21,7 @@ export const CLASSES = [
 const DEFAULT_KEY = '4-2';
 
 // 우리 학교 마스코트 이름 (이야기 안내자·변신 아이템 이름에 쓰여요)
-export const MASCOT_NAME = '학교 마스코트';
+export const MASCOT_NAME = '파동';
 
 // ---------- 지금 어느 반인지 정하기 ----------
 // 1) 주소의 /41  2) 이 컴퓨터가 기억한 반  3) 예전부터 쓰던 기기(4학년 2반)  4) 처음 온 기기 → 등록 때 반 고르기

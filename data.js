@@ -459,7 +459,7 @@ export const POWERUPS = [
 //   free:ms  → 자유 탐험 기록이 ms 이내
 //   class:k  → 우리 반 협동 목표 k단계 달성 (반 친구 모두 함께 받아요)
 export const ACCESSORIES = [
-  { id: 'mascot', slot: 'skin', name: '마스코트 변신', need: 'done', desc: '독도 탐험 수료하기' },
+  { id: 'mascot', slot: 'skin', name: '파동 변신', need: 'done', desc: '독도 탐험 수료하기' },
   { id: 'straw', slot: 'head', name: '밀짚모자', need: 'stars:3', desc: '별 3개 모으기' },
   { id: 'scarf', slot: 'neck', name: '빨간 목도리', need: 'stars:5', desc: '별 5개 모으기' },
   { id: 'goggles', slot: 'head', name: '물안경', need: 'stars:7', desc: '별 7개 모으기' },
