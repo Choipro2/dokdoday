@@ -32,7 +32,7 @@ function syncNow() {
     id: profile.id, number: profile.number, nickname: profile.nickname,
     chapter: save.done ? 5 : (save.started ? save.chapter : 0),
     cards: save.cards.length, dex: Object.keys(save.dex).length, done: !!save.done,
-    cert_design: save.cert?.design || null, best_free_ms: profile.best || null,
+    cert_design: (save.cert && save.cert.public !== false) ? save.cert.design : null, best_free_ms: profile.best || null,
   });
 }
 function profileLabel() { return profile ? `${profile.number}번 ${profile.nickname}` : ''; }
@@ -778,7 +778,7 @@ function openCertificate(onClose) {
         <label class="field">나의 별명 <small>(12글자까지 · 실명 대신 별명)</small><input id="cNick" maxlength="12" value="${cert.nickname}" placeholder="별명을 적어 주세요"></label>
         <label class="field">학교·반 (선택)<input id="cSchool" maxlength="14" value="${cert.school || ''}" placeholder="예: 동성초 4학년"></label>
         <div class="field">마음에 드는 수료증을 골라요<div class="designs">${CERT_DESIGNS.map(d => `<button data-d="${d.id}" class="${d.id === cert.design ? 'on' : ''}" style="background:linear-gradient(${d.bg[0]},${d.bg[1]});color:${d.ink}">${d.name}</button>`).join('')}</div></div>
-        <label class="check"><input type="checkbox" id="cHall" checked> 별명과 수료증을 명예의 전당에 남기기 (이 기기)</label>
+        <label class="check"><input type="checkbox" id="cHall" checked> ${Net.online ? `${CLASS_NAME} 명예의 전당에 남기기` : '명예의 전당에 남기기 (이 컴퓨터)'}</label>
         <div class="modal-actions" style="justify-content:flex-start">
           <button class="pill dark" id="cSave">수료 기록 저장</button>
           <button class="pill" id="cPng">PNG로 내려받기</button>
@@ -796,12 +796,12 @@ function openCertificate(onClose) {
   $$('.designs button', modalBox).forEach(b => b.addEventListener('click', () => { cert.design = b.dataset.d; $$('.designs button', modalBox).forEach(x => x.classList.toggle('on', x === b)); redraw(); }));
   $('#cSave').addEventListener('click', () => {
     if (!cert.nickname.trim()) { $('#cMsg').textContent = '별명을 먼저 적어 주세요.'; return; }
-    save.cert = { ...cert, cards: save.cards.length, dex: dexCount() }; persist();
+    save.cert = { ...cert, cards: save.cards.length, dex: dexCount(), public: $('#cHall').checked }; persist();
     if ($('#cHall').checked) {
       const hall = loadJSON(HALL_KEY, []);
       hall.unshift({ nickname: cert.nickname.trim(), school: cert.school.trim(), design: cert.design, date: cert.date });
       saveJSON(HALL_KEY, hall.slice(0, 100));
-      $('#cMsg').textContent = '수료증을 명예의 전당에 남겼어요!';
+      $('#cMsg').textContent = `수료증을 ${Net.online ? CLASS_NAME + ' ' : ''}명예의 전당에 남겼어요!`;
     } else $('#cMsg').textContent = '수료 기록을 비공개로 저장했어요.';
     Snd.sfx('portal');
   });
@@ -892,7 +892,7 @@ async function openRanking(tab = 'free', highlight = null) {
     try {
       let body;
       if (tab === 'free') body = freeTable(Net.bestPerPlayer(await Net.fetchFreeRuns()));
-      else body = hallTable((await Net.fetchPlayers()).filter(p => p.done));
+      else body = hallTable((await Net.fetchPlayers()).filter(p => p.done && p.cert_design));
       if (!modalOpen()) return;
       openModal(frame(body, `${CLASS_NAME} 친구들의 기록이 함께 모여요.`), { cls: 'wide' });
       bind();
