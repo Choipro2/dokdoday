@@ -891,7 +891,7 @@ async function openRanking(tab = 'free', highlight = null) {
     bind();
     try {
       let body;
-      if (tab === 'free') body = freeTable(Net.bestPerPlayer(await Net.fetchFreeRuns()));
+      if (tab === 'free') body = freeTable(await Net.fetchFreeBoard());
       else body = hallTable((await Net.fetchPlayers()).filter(p => p.done && p.cert_design));
       if (!modalOpen()) return;
       openModal(frame(body, `${CLASS_NAME} 친구들의 기록이 함께 모여요.`), { cls: 'wide' });

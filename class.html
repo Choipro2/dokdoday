@@ -194,10 +194,9 @@ async function load() {
     return;
   }
   try {
-    const [pl, runs] = await Promise.all([Net.fetchPlayers(), Net.fetchFreeRuns()]);
+    const [pl, best] = await Promise.all([Net.fetchPlayers(), Net.fetchFreeBoard()]);
     players = pl || [];
     render();
-    const best = Net.bestPerPlayer(runs);
     $('#rank').innerHTML = best.length ? best.slice(0, 15).map((r, i) => `<li><span class="r">${i + 1}</span><span>${r.number ?? ''}번 ${esc(r.nickname)}</span><span class="t">${fmtTime(r.ms)}</span></li>`).join('') : '<li class="empty">아직 기록이 없어요</li>';
     $('#stamp').textContent = `${new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} 기준 · 20초마다 자동 새로고침`;
   } catch (e) {

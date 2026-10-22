@@ -66,6 +66,16 @@ export async function fetchFreeRuns() {
   return req(`dokdo_free_runs?class_code=eq.${encodeURIComponent(CLASS_CODE)}&select=*&order=ms.asc&limit=300`);
 }
 
+// 랭킹판: 자유 탐험 기록 + 학생별 최고 기록(best_free_ms)을 합쳐서 보여 줘요
+// (기록 올리기가 한 번 실패해도 학생 진행 정보에 남은 최고 기록으로 채워져요)
+export async function fetchFreeBoard() {
+  if (!online) return null;
+  const [runs, players] = await Promise.all([fetchFreeRuns(), fetchPlayers()]);
+  const list = [...(runs || [])];
+  for (const p of players || []) if (p.best_free_ms) list.push({ player_id: p.id, number: p.number, nickname: p.nickname, ms: p.best_free_ms });
+  return bestPerPlayer(list);
+}
+
 // 학생별 최고 기록만 남기기
 export function bestPerPlayer(runs) {
   const best = new Map();
