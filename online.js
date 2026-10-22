@@ -6,14 +6,12 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY, CLASS_CODE } from './config.js';
 export const online = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
 
 function headers(extra = {}) {
-  return {
-    apikey: SUPABASE_ANON_KEY,
-    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-    'Content-Type': 'application/json',
-    ...extra,
-  };
+  const h = { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json', ...extra };
+  // 예전 anon 키(eyJ…)일 때만 Authorization 을 함께 보내요. 새 publishable 키(sb_publishable_…)는 apikey 만으로 돼요.
+  if (SUPABASE_ANON_KEY.startsWith('eyJ')) h.Authorization = `Bearer ${SUPABASE_ANON_KEY}`;
+  return h;
 }
-const base = () => `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1`;
+const base = () => `${SUPABASE_URL.replace(/\/+$/, '').replace(/\/rest\/v1$/, '')}/rest/v1`;
 
 async function req(path, opt = {}) {
   const r = await fetch(`${base()}/${path}`, { ...opt, headers: headers(opt.headers) });

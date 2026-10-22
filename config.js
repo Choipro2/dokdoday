@@ -5,8 +5,8 @@
 // Supabase 프로젝트 주소와 anon(public) 키
 // (Supabase → Project Settings → API 에서 복사. 북트리 프로젝트를 그대로 써도 돼요)
 // 비워 두면 기록은 각 컴퓨터에만 저장돼요.
-export const SUPABASE_URL = '';
-export const SUPABASE_ANON_KEY = '';
+export const SUPABASE_URL = 'https://gkvpdrindcowubudzdku.supabase.co';
+export const SUPABASE_ANON_KEY = 'sb_publishable_JkJ3soFv3kwrmX5vgzvu_w_OYnHWa-g';
 
 // 우리 반 이름 (기록을 묶는 이름표 · 다른 반과 겹치지 않게)
 export const CLASS_CODE = 'dongsung-our-class';
