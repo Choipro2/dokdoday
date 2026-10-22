@@ -1,0 +1,68 @@
+{
+  "rewrites": [
+    {
+      "source": "/41",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/41/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/41/class",
+      "destination": "/class.html"
+    },
+    {
+      "source": "/41/quiz",
+      "destination": "/quiz.html"
+    },
+    {
+      "source": "/42",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/42/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/42/class",
+      "destination": "/class.html"
+    },
+    {
+      "source": "/42/quiz",
+      "destination": "/quiz.html"
+    },
+    {
+      "source": "/43",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/43/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/43/class",
+      "destination": "/class.html"
+    },
+    {
+      "source": "/43/quiz",
+      "destination": "/quiz.html"
+    },
+    {
+      "source": "/44",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/44/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/44/class",
+      "destination": "/class.html"
+    },
+    {
+      "source": "/44/quiz",
+      "destination": "/quiz.html"
+    }
+  ]
+}

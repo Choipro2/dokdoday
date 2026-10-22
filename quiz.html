@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<base href="/">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
 <title>독도 퀴즈 대결</title>
@@ -80,12 +81,16 @@
 </div>
 
 <script type="module">
-import { CLASS_NAME, TEACHER_PIN } from './config.js';
+import { CLASS_NAME, TEACHER_PIN, CLASS_PATH } from './config.js';
+const LINK = { './': CLASS_PATH, 'quiz.html': `${CLASS_PATH}/quiz`, 'class.html': `${CLASS_PATH}/class` };
+document.querySelectorAll('a[href]').forEach(a => { const h = a.getAttribute('href'); if (LINK[h]) a.setAttribute('href', LINK[h]); });
 import * as Net from './online.js';
 import { BATTLE_QUESTIONS } from './data.js';
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+document.title = `${CLASS_NAME} 독도 퀴즈 대결`;
+document.querySelector('.top h1').textContent = `⚡ ${CLASS_NAME} 독도 퀴즈 대결`;
 const LIMIT = 20; // 문제당 초
 let st = null, answers = [], tick = null, lastKey = '', lastSig = '', autoRevealT = null;
 

@@ -65,3 +65,15 @@ vercel --prod
 - **강치 꾸미기**: 별·수료·자유 탐험 기록·우리 반 목표로 아이템 10가지가 열려요.
 - **우리 반 협동 목표**: 반 전체 낱말 엽서 150 · 300 · 480장마다 모두에게 아이템이 열려요.
 - **퀴즈 대결**: 선생님은 `quiz.html`(현황판 비밀번호)에서 대결을 열고, 학생은 게임 화면 위 노란 알림을 눌러 참여해요.
+
+## 여러 반에서 함께 쓰기
+주소 뒤에 반 번호만 붙이면 반마다 따로 기록이 모여요. 반 목록·번호·비밀번호는 `config.js`의 `CLASSES`, 주소 연결은 `vercel.json`에 있어요.
+
+| 반 | 학생 링크 | 선생님 현황판 | 퀴즈 대결 | 비밀번호 |
+|---|---|---|---|---|
+| 4학년 1반 | dokdoday.vercel.app/41 | dokdoday.vercel.app/41/class | dokdoday.vercel.app/41/quiz | 7351 |
+| 4학년 2반 | dokdoday.vercel.app/42 | dokdoday.vercel.app/42/class | dokdoday.vercel.app/42/quiz | 1025 |
+| 4학년 3반 | dokdoday.vercel.app/43 | dokdoday.vercel.app/43/class | dokdoday.vercel.app/43/quiz | 2968 |
+| 4학년 4반 | dokdoday.vercel.app/44 | dokdoday.vercel.app/44/class | dokdoday.vercel.app/44/quiz | 5847 |
+
+- 링크로 한 번 들어온 기기는 반을 기억해요. 링크 없이 처음 들어온 기기는 탐험가 등록 때 반을 골라요.

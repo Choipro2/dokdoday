@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<base href="/">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
 <title>우리 반 독도 탐험 현황</title>
@@ -116,7 +117,9 @@
 </main>
 
 <script type="module">
-import { CLASS_NAME, CLASS_NUMBERS, TEACHER_PIN } from './config.js';
+import { CLASS_NAME, CLASS_NUMBERS, TEACHER_PIN, CLASS_PATH } from './config.js';
+const LINK = { './': CLASS_PATH, 'quiz.html': `${CLASS_PATH}/quiz`, 'class.html': `${CLASS_PATH}/class` };
+document.querySelectorAll('a[href]').forEach(a => { const h = a.getAttribute('href'); if (LINK[h]) a.setAttribute('href', LINK[h]); });
 import * as Net from './online.js';
 import { CLASS_GOALS, ACCESSORIES } from './data.js';
 

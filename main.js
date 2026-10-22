@@ -6,7 +6,7 @@ import * as A from './art.js';
 import * as Snd from './audio.js';
 import { World, storyConfig, freeConfig } from './game.js';
 import * as Net from './online.js';
-import { CLASS_NAME, CLASS_NUMBERS } from './config.js';
+import { CLASS_NAME, CLASS_NUMBERS, CLASSES, CLASS_KEY, CLASS_KNOWN, chooseClass, classPath } from './config.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -39,27 +39,42 @@ function profileLabel() { return profile ? `${profile.number}번 ${profile.nickn
 function ensureProfile(next, force = false) {
   if (profile && !force) return next();
   const used = profile?.number;
-  openModal(`<div class="eyebrow">${CLASS_NAME} 독도 탐험가 등록</div><h2>나는 누구일까요?</h2>
-    <p class="muted">번호와 별명을 정하면 선생님 화면에 우리 반 기록이 함께 모여요. 실명 대신 별명을 써요.</p>
-    <div class="field">출석번호<div class="nums">${CLASS_NUMBERS.map(n => `<button data-n="${n}" class="${n === used ? 'on' : ''}">${n}</button>`).join('')}</div></div>
-    <label class="field">별명 (12글자까지)<input id="pNick" maxlength="12" value="${profile ? esc(profile.nickname) : ''}" placeholder="예: 바다탐험가"></label>
-    <p class="muted" id="pMsg"></p>
-    <div class="modal-actions"><button class="pill dark big" id="pOk">탐험가 등록</button></div>`, { cls: 'narrow' });
+  // 반을 모르는 새 기기면 반부터 골라요 (?반= 링크로 들어오면 이미 정해져 있어요)
+  let cls = CLASS_KNOWN ? CLASSES.find(c => c.key === CLASS_KEY) : null;
   let num = used || null;
-  $$('.nums button', modalBox).forEach(b => b.addEventListener('click', () => { num = +b.dataset.n; $$('.nums button', modalBox).forEach(x => x.classList.toggle('on', x === b)); }));
-  $('#pOk').addEventListener('click', () => {
-    const nick = $('#pNick').value.trim();
-    if (!num) { $('#pMsg').textContent = '출석번호를 골라 주세요.'; return; }
-    if (!nick) { $('#pMsg').textContent = '별명을 적어 주세요.'; return; }
-    const changedPerson = profile && profile.number !== num;
-    profile = { id: changedPerson || !profile ? newId() : profile.id, number: num, nickname: nick, best: changedPerson ? null : profile?.best || null };
-    saveJSON(PROFILE_KEY, profile);
-    if (changedPerson) { save = freshSave(); saveJSON(SAVE_KEY, save); }
-    syncNow();
-    refreshTitle();
-    closeModal();
-    next();
-  });
+  const draw = () => {
+    const nums = cls ? cls.numbers : [];
+    openModal(`<div class="eyebrow">${cls ? cls.name : '우리 반'} 독도 탐험가 등록</div><h2>나는 누구일까요?</h2>
+      <p class="muted">반과 번호, 별명을 정하면 선생님 화면에 우리 반 기록이 함께 모여요. 실명 대신 별명을 써요.</p>
+      ${CLASS_KNOWN ? '' : `<div class="field">우리 반<div class="nums cls">${CLASSES.map(c => `<button data-c="${c.key}" class="${cls && cls.key === c.key ? 'on' : ''}">${c.name.replace('4학년 ', '')}</button>`).join('')}</div></div>`}
+      ${cls ? `<div class="field">출석번호<div class="nums">${nums.map(n => `<button data-n="${n}" class="${n === num ? 'on' : ''}">${n}</button>`).join('')}</div></div>` : '<p class="muted">먼저 우리 반을 골라 주세요.</p>'}
+      <label class="field">별명 (12글자까지)<input id="pNick" maxlength="12" value="${esc($('#pNick')?.value ?? profile?.nickname ?? '')}" placeholder="예: 바다탐험가"></label>
+      <p class="muted" id="pMsg"></p>
+      <div class="modal-actions"><button class="pill dark big" id="pOk">탐험가 등록</button></div>`, { cls: 'narrow' });
+    $$('.nums.cls button', modalBox).forEach(b => b.addEventListener('click', () => { cls = CLASSES.find(c => c.key === b.dataset.c); num = null; draw(); }));
+    $$('.nums:not(.cls) button', modalBox).forEach(b => b.addEventListener('click', () => { num = +b.dataset.n; $$('.nums:not(.cls) button', modalBox).forEach(x => x.classList.toggle('on', x === b)); }));
+    $('#pOk').addEventListener('click', () => {
+      const nick = $('#pNick').value.trim();
+      if (!cls) { $('#pMsg').textContent = '우리 반을 골라 주세요.'; return; }
+      if (!num) { $('#pMsg').textContent = '출석번호를 골라 주세요.'; return; }
+      if (!nick) { $('#pMsg').textContent = '별명을 적어 주세요.'; return; }
+      const changedPerson = profile && profile.number !== num;
+      profile = { id: changedPerson || !profile ? newId() : profile.id, number: num, nickname: nick, best: changedPerson ? null : profile?.best || null };
+      saveJSON(PROFILE_KEY, profile);
+      if (changedPerson) { save = freshSave(); saveJSON(SAVE_KEY, save); }
+      if (cls.key !== CLASS_KEY || !CLASS_KNOWN) {
+        // 다른 반을 골랐으면 그 반 주소로 다시 열어요
+        chooseClass(cls.key);
+        location.href = classPath(cls.key);
+        return;
+      }
+      syncNow();
+      refreshTitle();
+      closeModal();
+      next();
+    });
+  };
+  draw();
 }
 Snd.loadVolume(loadJSON(VOL_KEY, {}));
 A.setKangAcc(save.acc);
@@ -796,7 +811,7 @@ function openDressUp() {
 let classProg = null;
 async function refreshClassGoal() {
   const box = $('#classGoal');
-  if (!Net.online) { box.style.display = 'none'; return; }
+  if (!Net.online || !CLASS_KNOWN) { box.style.display = 'none'; return; }
   try {
     classProg = await Net.fetchClassProgress();
   } catch (e) { return; }
@@ -819,7 +834,7 @@ setInterval(() => { if (screen === 'title') refreshClassGoal(); }, 30000);
 // =============================================================
 let quizState = null, quizJoined = null, quizOverlay = false, quizPollT = null, quizAnswered = {};
 async function pollQuiz() {
-  if (!Net.online) return;
+  if (!Net.online || !CLASS_KNOWN) return;
   try { quizState = await Net.getQuiz(); } catch (e) { return; }
   const live = quizState && ['lobby', 'question', 'reveal', 'end'].includes(quizState.status);
   const banner = $('#quizBanner');
@@ -1159,7 +1174,7 @@ function refreshTitle() {
   $('#btnContinue').disabled = !save.started;
   const tag = $('#whoTag');
   tag.style.display = profile ? '' : 'none';
-  tag.textContent = profile ? `탐험가 · ${profileLabel()} (바꾸기)` : '';
+  tag.textContent = profile ? `${CLASS_NAME} · ${profileLabel()} (바꾸기)` : '';
   $('#lnkChapters').style.display = save.started || totalStars() ? '' : 'none';
   $('#lnkDress').textContent = `강치 꾸미기${ACCESSORIES.some(accUnlocked) ? ' ✨' : ''}`;
   A.setKangAcc(save.acc);
@@ -1222,6 +1237,7 @@ modal.addEventListener('click', (e) => { if (e.target === modal && modalEscClose
 
 refreshTitle();
 resize();
+syncNow();
 
 // 테스트·디버그용
 window.__dokdo = { get world() { return world; }, startChapter, startFree, playStory, save: () => save, openCertificate, finishChapter, openDressUp, openChapterSelect, refreshClassGoal, pollQuiz };
