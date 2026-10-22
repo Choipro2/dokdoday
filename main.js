@@ -843,7 +843,6 @@ function startFree() {
 }
 function openFreeResult(ms) {
   world.paused = true;
-  const local = loadJSON(RANK_KEY, []);
   const myBest = profile?.best ?? null;
   const isBest = myBest == null || ms < myBest;
   openModal(`<div class="eyebrow">성장 완료!</div><h2>대장 강이가 되었어요</h2>
@@ -851,27 +850,20 @@ function openFreeResult(ms) {
     <div class="big-time">${fmtTime(ms)}</div>
     ${isBest ? '<p style="text-align:center" class="jua">🎉 나의 최고 기록!</p>' : `<p style="text-align:center" class="muted">나의 최고 기록 ${fmtTime(myBest)}</p>`}
     <p style="text-align:center">${esc(profileLabel())}</p>
-    <div class="modal-actions"><button class="pill dark" id="rSave">랭킹에 기록하기</button><button class="pill" id="rAgain">다시 도전</button><button class="pill coral" id="rHome">처음 화면으로</button></div>
-    <p class="muted" id="rMsg">${Net.online ? `${CLASS_NAME} 랭킹에 함께 올라가요.` : '기록은 이 컴퓨터에 저장돼요.'}</p>`, { cls: 'narrow', closable: false });
-  let saved = false;
-  $('#rSave').addEventListener('click', async () => {
-    if (saved) return;
-    saved = true;
-    $('#rSave').disabled = true;
-    const rec = { nick: profile.nickname, number: profile.number, ms, date: new Date().toISOString().slice(0, 10), id: Date.now() };
-    local.push(rec); local.sort((x, y) => x.ms - y.ms);
-    saveJSON(RANK_KEY, local.slice(0, 50));
-    if (isBest) { profile.best = ms; saveJSON(PROFILE_KEY, profile); syncNow(); }
-    if (Net.online) {
-      $('#rMsg').textContent = '우리 반 랭킹에 올리는 중…';
-      const ok = await Net.addFreeRun({ player_id: profile.id, number: profile.number, nickname: profile.nickname, ms });
-      if (!ok) toast('인터넷 연결이 불안정해 이 컴퓨터에만 저장했어요');
-    }
-    closeModal();
-    world = null;
-    show('title');
-    openRanking('free', profile.id);
-  });
+    <div class="modal-actions"><button class="pill dark" id="rRank">랭킹 보기</button><button class="pill" id="rAgain">다시 도전</button><button class="pill coral" id="rHome">처음 화면으로</button></div>
+    <p class="muted" id="rMsg" style="text-align:center">기록을 저장하고 있어요…</p>`, { cls: 'narrow', closable: false });
+  // 끝나는 순간 자동으로 저장해요 (버튼을 누르지 않아도 기록이 남아요)
+  const local = loadJSON(RANK_KEY, []);
+  local.push({ nick: profile?.nickname || '탐험가', number: profile?.number, ms, date: new Date().toISOString().slice(0, 10), id: Date.now() });
+  local.sort((x, y) => x.ms - y.ms);
+  saveJSON(RANK_KEY, local.slice(0, 50));
+  if (isBest && profile) { profile.best = ms; saveJSON(PROFILE_KEY, profile); syncNow(); }
+  const done = (async () => {
+    if (!Net.online || !profile) { $('#rMsg') && ($('#rMsg').textContent = '기록을 저장했어요.'); return; }
+    const ok = await Net.addFreeRun({ player_id: profile.id, number: profile.number, nickname: profile.nickname, ms });
+    if ($('#rMsg')) $('#rMsg').textContent = ok ? `${CLASS_NAME} 랭킹에 저장했어요!` : '인터넷이 불안정해 최고 기록만 저장했어요. 랭킹에는 그대로 보여요.';
+  })();
+  $('#rRank').addEventListener('click', async () => { await done; closeModal(); world = null; show('title'); openRanking('free', profile?.id); });
   $('#rAgain').addEventListener('click', () => { closeModal(); startFree(); });
   $('#rHome').addEventListener('click', () => { closeModal(); goTitle(); });
 }
